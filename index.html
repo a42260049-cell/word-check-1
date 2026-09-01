@@ -282,6 +282,10 @@
         showResult();
         return;
       }
+
+ // 前の問題の正解・不正解メッセージを消す
+  document.getElementById("message").textContent = "";
+
       const q = questions[currentQuestionIndex];
       document.getElementById("question").textContent = q.q;
       const optionsDiv = document.getElementById("options");
@@ -296,38 +300,80 @@
     }
 
 // 回答チェック
-function checkAnswer(selected){
+function checkAnswer(selected) {
   const q = questions[currentQuestionIndex];
-  if(selected === q.answerIndex){
+  const optionsDiv = document.getElementById("options");
+
+  // 連続クリックを防ぐため、選択肢を一時的に無効化
+  const buttons = optionsDiv.querySelectorAll("button");
+  buttons.forEach(btn => btn.disabled = true);
+
+  if (selected === q.answerIndex) {
     enemyHP--;
     updateHP();
-    document.getElementById("message").textContent = "正解！ 敵にダメージ！";
+    document.getElementById("message").textContent =
+      "正解！ 敵にダメージ！";
     correctCount++;
 
-    if(enemyHP <= 0){
-      if(enemyIndex === enemyImages.length - 1){
+    // 敵を倒した場合
+    if (enemyHP <= 0) {
+      if (enemyIndex === enemyImages.length - 1) {
+        document.getElementById("message").textContent =
+          "正解！ 最後の敵を倒した！";
+
         createExplosion();
-        setTimeout(showResult, 800);
-        return; // 最後の敵はここで処理終了
+
+        setTimeout(() => {
+          showResult();
+        }, 1500);
+
+        return;
       } else {
-        document.getElementById("message").textContent = "敵を倒した！";
+        document.getElementById("message").textContent =
+          "正解！ 敵を倒した！";
+
         enemyIndex++;
-        setEnemy();
+
+        // 問題を次へ
+        currentQuestionIndex++;
+
+        setTimeout(() => {
+          setEnemy();
+
+          if (currentQuestionIndex >= questions.length) {
+            showResult();
+          } else {
+            showQuestion();
+          }
+        }, 1000);
+
+        return;
       }
     }
+
   } else {
-    document.getElementById("message").textContent = "不正解！もう一度挑戦！";
-    wrongList.push({question:q.q, correct:q.options[q.answerIndex]});
+    // 不正解時にすぐ正答を表示
+    document.getElementById("message").textContent =
+      `不正解！ 正解は「${q.options[q.answerIndex]}」です。`;
+
+    // 成績画面の復習用リストにも保存
+    wrongList.push({
+      question: q.q,
+      correct: q.options[q.answerIndex]
+    });
   }
 
- currentQuestionIndex++;
-      if (currentQuestionIndex >= questions.length) {
-        showResult();
-      } else {
-        showQuestion();
-      }
-    }
+  // 次の問題へ進む
+  currentQuestionIndex++;
 
+  setTimeout(() => {
+    if (currentQuestionIndex >= questions.length) {
+      showResult();
+    } else {
+      showQuestion();
+    }
+  }, 1500);
+}
 
 // 爆発表示
 function createExplosion(){
